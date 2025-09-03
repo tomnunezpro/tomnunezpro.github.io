@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0ea5e9" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <title>Budget Courses Mensuel</title>
+  <style>
+    :root{
+      --bg:#0b1020;       /* fond sombre élégant */
+      --card:#121a2f;     /* cartes */
+      --muted:#7a88a8;    /* texte secondaire */
+      --text:#e6ecff;     /* texte principal */
+      --brand:#0ea5e9;    /* accent */
+      --good:#10b981;     /* reste positif */
+      --bad:#ef4444;      /* dépassement */
+      --shadow: rgba(0,0,0,.35);
+    }
+    html,body{height:100%;}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1200px 600px at 80% -10%, rgba(14,165,233,.15), transparent 60%), var(--bg);
+      color:var(--text);
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+    .container{max-width:980px; margin:0 auto; padding:24px;}
+    header{display:flex; gap:16px; align-items:center; justify-content:space-between; margin-bottom:16px;}
+    .title{font-weight:800; letter-spacing:.2px; font-size:clamp(22px, 4vw, 28px);} 
+    .card{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.0)); border:1px solid rgba(255,255,255,.08); box-shadow:0 8px 30px var(--shadow); border-radius:16px; padding:16px;}
+    .grid{display:grid; gap:16px;}
+    @media(min-width:880px){.grid-2{grid-template-columns: 1.2fr .8fr;} .grid-3{grid-template-columns:1fr 1fr 1fr;}}
+    label{font-size:12px; color:var(--muted); display:block; margin:0 0 6px;}
+    input,button,select{font:inherit; color:inherit}
+    input[type="number"], input[type="text"], input[type="date"], input[type="month"], select{
+      width:100%; box-sizing:border-box; border-radius:12px; border:1px solid rgba(255,255,255,.1); background:#0d1426; padding:12px 14px; outline:none; transition: border .15s, box-shadow .15s;
+    }
+    input:focus, select:focus{border-color:var(--brand); box-shadow:0 0 0 3px rgba(14,165,233,.25)}
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+    .btn{display:inline-flex; align-items:center; gap:8px; border:1px solid rgba(255,255,255,.12); background:linear-gradient(180deg, rgba(14,165,233,.18), rgba(14,165,233,.05)); padding:10px 14px; border-radius:12px; cursor:pointer; outline:none; transition: transform .05s ease, filter .15s;} 
+    .btn:hover{filter:brightness(1.08)}
+    .btn:active{transform:translateY(1px)}
+    .btn.secondary{background:transparent}
+    .btn.danger{background:linear-gradient(180deg, rgba(239,68,68,.25), rgba(239,68,68,.07)); border-color: rgba(239,68,68,.5)}
+    .btn.small{padding:6px 10px; border-radius:10px; font-size:13px}
+    .toolbar{display:flex; flex-wrap:wrap; gap:8px}
+    .summary{display:grid; gap:10px}
+    .kpi{background:#0d1426; border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:12px}
+    .kpi .label{color:var(--muted); font-size:12px}
+    .kpi .value{font-weight:700; font-size:20px;}
+    .progress{height:12px; background:#0d1426; border:1px solid rgba(255,255,255,.08); border-radius:999px; overflow:hidden}
+    .bar{height:100%; background:linear-gradient(90deg, var(--brand), #22d3ee); width:0%}
+    .list{display:grid; gap:12px}
+    .item{display:grid; grid-template-columns: auto 1fr auto auto; gap:10px; align-items:center; padding:10px 12px; border-radius:12px; background:#0d1426; border:1px solid rgba(255,255,255,.08)}
+    .item .date{font-size:12px; color:var(--muted);}
+    .item .label{font-weight:600}
+    .item .amount{font-variant-numeric: tabular-nums; font-weight:700}
+    .muted{color:var(--muted)}
+    .spacer{height:8px}
+    .right{margin-left:auto}
+    .pill{font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.02)}
+    .hint{font-size:12px; color:var(--muted); margin-top:8px}
+    footer{opacity:.8; font-size:12px; margin-top:18px; color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="title">🧮 Budget courses mensuel</div>
+      <div class="toolbar">
+        <button class="btn secondary" id="exportBtn" title="Exporter les données en JSON">⬇️ Export</button>
+        <label class="btn secondary" for="importFile" title="Importer un fichier JSON de sauvegarde">⬆️ Import</label>
+        <input id="importFile" type="file" accept="application/json" style="display:none" />
+      </div>
+    </header>
+
+    <div class="grid grid-2">
+      <!-- Colonne gauche: suivi -->
+      <section class="card">
+        <div class="row">
+          <div>
+            <label for="monthPicker">Mois</label>
+            <input type="month" id="monthPicker" />
+          </div>
+          <div>
+            <label for="budgetInput">Budget du mois (€)</label>
+            <div class="row" style="grid-template-columns:1fr auto; gap:8px">
+              <input id="budgetInput" type="number" step="0.01" min="0" placeholder="300" />
+              <button class="btn" id="saveBudgetBtn">💾</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="spacer"></div>
+        <div class="grid grid-3 summary">
+          <div class="kpi">
+            <div class="label">Budget</div>
+            <div class="value" id="kpiBudget">—</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Dépensé</div>
+            <div class="value" id="kpiSpent">—</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Restant</div>
+            <div class="value" id="kpiLeft">—</div>
+          </div>
+        </div>
+
+        <div class="spacer"></div>
+        <div class="progress" title="Avancement du budget">
+          <div class="bar" id="progressBar"></div>
+        </div>
+        <div class="hint" id="statusHint"></div>
+
+        <div class="spacer"></div>
+        <h3 style="margin:6px 0 10px; font-size:16px">Ajouter un ticket</h3>
+        <div class="row">
+          <div>
+            <label for="amountInput">Montant (€)</label>
+            <input id="amountInput" type="number" step="0.01" min="0.01" placeholder="35.60" />
+          </div>
+          <div>
+            <label for="labelInput">Libellé (optionnel)</label>
+            <input id="labelInput" type="text" placeholder="Ex: Carrefour, fruits…" />
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div>
+            <label for="dateInput">Date</label>
+            <input id="dateInput" type="date" />
+          </div>
+          <div style="display:flex; align-items:flex-end;">
+            <button class="btn" id="addBtn">+ Ajouter</button>
+          </div>
+        </div>
+
+        <div class="spacer"></div>
+        <div class="toolbar">
+          <span class="pill" id="monthInfo">—</span>
+          <button class="btn danger" id="resetMonthBtn" title="Supprimer toutes les dépenses du mois courant">Réinitialiser le mois</button>
+        </div>
+      </section>
+
+      <!-- Colonne droite: liste -->
+      <section class="card">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px">
+          <h3 style="margin:0; font-size:16px">Dépenses du mois</h3>
+          <span class="muted" id="countBadge">0 élément</span>
+        </div>
+        <div class="list" id="list"></div>
+        <footer>Astuce : appuie sur ✏️ pour modifier, 🗑️ pour supprimer. Les données sont stockées uniquement sur cet appareil (localStorage).</footer>
+      </section>
+    </div>
+  </div>
+
+  <script>
+  // -------------------------------
+  //  UTILITAIRES
+  // -------------------------------
+  const EUR = new Intl.NumberFormat('fr-FR',{style:'currency', currency:'EUR'});
+  const fmtDate = (iso)=>{
+    try{
+      const d = new Date(iso);
+      return d.toLocaleDateString('fr-FR',{ day:'2-digit', month:'short'}).replace('.', '');
+    }catch{ return iso }
+  }
+  const todayISO = ()=> new Date().toISOString().slice(0,10);
+  const toMonthKey = (dateISO)=> (dateISO || todayISO()).slice(0,7); // YYYY-MM
+
+  // -------------------------------
+  //  STOCKAGE & ÉTAT
+  // -------------------------------
+  const KEY = 'groceryBudget_v1';
+  let state = load();
+  function load(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if(raw){ return JSON.parse(raw) }
+    }catch{ /* ignore */ }
+    return { defaultBudget: 300, months: {} };
+  }
+  function save(){ localStorage.setItem(KEY, JSON.stringify(state)) }
+
+  // S'assure que le mois existe
+  function ensureMonth(monthKey){
+    if(!state.months[monthKey]){
+      state.months[monthKey] = { budget: state.defaultBudget || 300, expenses: [] };
+      save();
+    }
+  }
+
+  // -------------------------------
+  //  UI ELEMENTS
+  // -------------------------------
+  const monthPicker = document.getElementById('monthPicker');
+  const budgetInput = document.getElementById('budgetInput');
+  const saveBudgetBtn = document.getElementById('saveBudgetBtn');
+  const amountInput = document.getElementById('amountInput');
+  const labelInput = document.getElementById('labelInput');
+  const dateInput = document.getElementById('dateInput');
+  const addBtn = document.getElementById('addBtn');
+  const list = document.getElementById('list');
+  const kpiBudget = document.getElementById('kpiBudget');
+  const kpiSpent = document.getElementById('kpiSpent');
+  const kpiLeft = document.getElementById('kpiLeft');
+  const progressBar = document.getElementById('progressBar');
+  const countBadge = document.getElementById('countBadge');
+  const monthInfo = document.getElementById('monthInfo');
+  const statusHint = document.getElementById('statusHint');
+  const exportBtn = document.getElementById('exportBtn');
+  const importFile = document.getElementById('importFile');
+  const resetMonthBtn = document.getElementById('resetMonthBtn');
+
+  let currentMonth = toMonthKey();
+
+  // -------------------------------
+  //  RENDU
+  // -------------------------------
+  function render(){
+    ensureMonth(currentMonth);
+    const m = state.months[currentMonth];
+    // KPIs
+    const spent = m.expenses.reduce((s,e)=> s + Number(e.amount||0), 0);
+    const left = (Number(m.budget)||0) - spent;
+    kpiBudget.textContent = EUR.format(Number(m.budget)||0);
+    kpiSpent.textContent = EUR.format(spent);
+    kpiLeft.textContent = EUR.format(left);
+    kpiLeft.style.color = left >= 0 ? 'var(--good)' : 'var(--bad)';
+
+    // Progression
+    const pct = (Number(m.budget) > 0) ? Math.min(100, Math.max(0, (spent / Number(m.budget)) * 100)) : 0;
+    progressBar.style.width = pct + '%';
+    statusHint.textContent = left >= 0
+      ? `Il reste ${EUR.format(left)} sur ${EUR.format(m.budget)}.`
+      : `Dépassement de ${EUR.format(-left)} au‑delà du budget.`;
+
+    // Form valeurs
+    monthPicker.value = currentMonth;
+    budgetInput.value = Number(m.budget).toString();
+
+    // Liste
+    list.innerHTML = '';
+    const sorted = [...m.expenses].sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+    sorted.forEach(e=> list.appendChild(renderItem(e)));
+    countBadge.textContent = `${sorted.length} ${sorted.length>1?'éléments':'élément'}`;
+
+    // Info mois
+    const dt = new Date(currentMonth+"-01T00:00:00");
+    monthInfo.textContent = dt.toLocaleDateString('fr-FR',{ month:'long', year:'numeric' });
+  }
+
+  function renderItem(e){
+    const row = document.createElement('div');
+    row.className = 'item';
+    const d = document.createElement('div'); d.className='date muted'; d.textContent = fmtDate(e.date||todayISO());
+    const lab = document.createElement('div'); lab.className='label'; lab.textContent = e.label || '—';
+    const amt = document.createElement('div'); amt.className='amount'; amt.textContent = '− ' + EUR.format(Number(e.amount)||0);
+
+    const actions = document.createElement('div'); actions.style.display='flex'; actions.style.gap='6px';
+    const editBtn = document.createElement('button'); editBtn.className='btn small secondary'; editBtn.textContent='✏️';
+    const delBtn = document.createElement('button'); delBtn.className='btn small danger'; delBtn.textContent='🗑️';
+
+    editBtn.addEventListener('click', ()=> editExpense(e.id));
+    delBtn.addEventListener('click', ()=> deleteExpense(e.id));
+
+    actions.append(editBtn, delBtn);
+    row.append(d, lab, amt, actions);
+    return row;
+  }
+
+  // -------------------------------
+  //  ACTIONS
+  // -------------------------------
+  function setMonth(v){
+    if(!/^\d{4}-\d{2}$/.test(v)) return;
+    currentMonth = v; render();
+  }
+
+  function setBudget(){
+    const v = Number(budgetInput.value);
+    if(!isFinite(v) || v < 0){ alert('Entre un budget valide.'); return }
+    ensureMonth(currentMonth);
+    state.months[currentMonth].budget = +(v.toFixed(2));
+    // Met à jour aussi le budget par défaut pour futurs mois
+    state.defaultBudget = state.defaultBudget || 0;
+    if(confirm('Utiliser ce montant comme budget par défaut pour les nouveaux mois ?')){
+      state.defaultBudget = +(v.toFixed(2));
+    }
+    save(); render();
+  }
+
+  function addExpense(){
+    const amt = Number(amountInput.value);
+    if(!isFinite(amt) || amt <= 0){ alert('Montant invalide.'); return }
+    const label = (labelInput.value||'').trim();
+    const date = (dateInput.value || todayISO());
+    const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2,7)}`;
+    ensureMonth(currentMonth);
+    state.months[currentMonth].expenses.push({ id, amount:+(amt.toFixed(2)), label, date });
+    save();
+    amountInput.value = '';
+    labelInput.value = '';
+    dateInput.value = todayISO();
+    render();
+  }
+
+  function deleteExpense(id){
+    const m = state.months[currentMonth];
+    const i = m.expenses.findIndex(x=>x.id===id);
+    if(i>=0){
+      if(confirm('Supprimer cette dépense ?')){
+        m.expenses.splice(i,1); save(); render();
+      }
+    }
+  }
+
+  function editExpense(id){
+    const m = state.months[currentMonth];
+    const it = m.expenses.find(x=>x.id===id);
+    if(!it) return;
+    const newAmt = prompt('Nouveau montant (€):', String(it.amount));
+    if(newAmt===null) return; // annulé
+    const v = Number(newAmt);
+    if(!isFinite(v) || v<=0){ alert('Montant invalide.'); return }
+    const newLabel = prompt('Nouveau libellé:', it.label||'');
+    const newDate = prompt('Nouvelle date (AAAA-MM-JJ):', it.date||todayISO());
+    if(newDate && /^\d{4}-\d{2}-\d{2}$/.test(newDate)) it.date = newDate;
+    it.amount = +(v.toFixed(2));
+    it.label = (newLabel||'').trim();
+    save(); render();
+  }
+
+  function resetMonth(){
+    if(confirm('Réinitialiser toutes les dépenses de ce mois ?')){
+      ensureMonth(currentMonth);
+      state.months[currentMonth].expenses = []; save(); render();
+    }
+  }
+
+  function doExport(){
+    const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'budget-courses.json'; a.click();
+    setTimeout(()=> URL.revokeObjectURL(url), 1000);
+  }
+
+  function doImport(file){
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const incoming = JSON.parse(reader.result);
+        if(!incoming || typeof incoming !== 'object'){ throw new Error('Format invalide') }
+        // Merge simple
+        state.defaultBudget = incoming.defaultBudget || state.defaultBudget;
+        state.months = { ...state.months, ...(incoming.months||{}) };
+        save(); render();
+        alert('Import réussi ✅');
+      }catch(e){
+        alert('Échec de l\'import : ' + (e.message||e));
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // -------------------------------
+  //  INIT
+  // -------------------------------
+  function init(){
+    // Valeurs par défaut
+    dateInput.value = todayISO();
+    monthPicker.value = currentMonth;
+    ensureMonth(currentMonth);
+    render();
+
+    // Events
+    monthPicker.addEventListener('change', e=> setMonth(e.target.value));
+    saveBudgetBtn.addEventListener('click', setBudget);
+    addBtn.addEventListener('click', addExpense);
+    amountInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') addExpense(); });
+    exportBtn.addEventListener('click', doExport);
+    importFile.addEventListener('change', (e)=>{ if(e.target.files && e.target.files[0]) doImport(e.target.files[0]); e.target.value=''; });
+    resetMonthBtn.addEventListener('click', resetMonth);
+  }
+
+  init();
+  </script>
+  <script>
+    // Enregistrement du Service Worker (PWA)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(console.error);
+      });
+    }
+  </script>
+</body>
+</html>
+
